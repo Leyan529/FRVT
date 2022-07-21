@@ -1,0 +1,15 @@
+tensorboard
+easydict
+mxnet
+onnx
+sklearn
+
+onnx-simplifier
+onnx==1.10.2
+onnxruntime
+imgaug
+yacs
+setuptools==59.5.0
+torchsummary
+
+pip install --extra-index-url https://developer.download.nvidia.com/compute/redist --upgrade nvidia-dali-cuda102
