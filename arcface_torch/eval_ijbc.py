@@ -41,7 +41,7 @@ parser.add_argument('--network',
     default='resnet_269', 
     type=str, help='')
 
-parser.add_argument('--image-path', default='/home/leyan/Downloads/ijb-testsuite/ijb/IJBC', type=str, help='')
+parser.add_argument('--image-path', default='/home/leyan/DataSet/FR-val/IJBC', type=str, help='')
 parser.add_argument('--result-dir', default='result_dir', type=str, help='')
 parser.add_argument('--batch-size', default=128, type=int, help='')
 parser.add_argument('--job', default='insightface', type=str, help='job name')
@@ -96,24 +96,24 @@ class Embedding(object):
         else:
             landmark5 = landmark
         tform = trans.SimilarityTransform()
-        tform.estimate(landmark5, self.src)
+        tform.estimate(landmark5, self.src) # 從一組對應點（源點、目標點）估計變換矩陣
         M = tform.params[0:2, :]
-        img = cv2.warpAffine(rimg,
+        img = cv2.warpAffine(rimg, # 仿射函数
                              M, (self.image_size[1], self.image_size[0]),
                              borderValue=0.0)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img_flip = np.fliplr(img)
+        img_flip = np.fliplr(img) # 水平翻转
         img = np.transpose(img, (2, 0, 1))  # 3*112*112, RGB
         img_flip = np.transpose(img_flip, (2, 0, 1))
         input_blob = np.zeros((2, 3, self.image_size[1], self.image_size[0]), dtype=np.uint8)
         input_blob[0] = img
         input_blob[1] = img_flip
         return input_blob
-
+    
     @torch.no_grad()
     def forward_db(self, batch_data):
         imgs = torch.Tensor(batch_data).cuda()
-        imgs.div_(255).sub_(0.5).div_(0.5)
+        imgs.div_(255).sub_(0.5).div_(0.5) # normalize
         feat = self.model(imgs)
         feat = feat.reshape([self.batch_size, 2 * feat.shape[1]])
         return feat.cpu().numpy()
@@ -183,10 +183,12 @@ def get_image_feature(img_path, files_list, model_path, epoch, gpu_id):
         lmk = lmk.reshape((5, 2))
         input_blob = embedding.get(img, lmk)
 
+        # store input_blob = (transform images, flip transform images)
         batch_data[2 * (img_index - batch * batch_size)][:] = input_blob[0]
         batch_data[2 * (img_index - batch * batch_size) + 1][:] = input_blob[1]
         if (img_index + 1) % batch_size == 0:
             print('batch', batch)
+            # store batch img_feats
             img_feats[batch * batch_size:batch * batch_size +
                                          batch_size][:] = embedding.forward_db(batch_data)
             batch += 1
@@ -319,7 +321,7 @@ def read_score(path):
     return img_feats
 
 
-# # Step1: Load Meta Data
+# Step1: Load Meta Data
 
 
 
@@ -353,7 +355,7 @@ p1, p2, label = read_template_pair_list(
 stop = timeit.default_timer()
 print('Time: %.2f s. ' % (stop - start))
 
-# # Step 2: Get Image Features
+# Step 2: Get Image Features
 
 
 
@@ -421,7 +423,7 @@ template_norm_feats, unique_templates = image2template_feature(
 stop = timeit.default_timer()
 print('Time: %.2f s. ' % (stop - start))
 
-# # Step 4: Get Template Similarity Scores
+# Step 4: Get Template Similarity Scores
 
 
 
@@ -463,7 +465,7 @@ fig = plt.figure()
 for method in methods:
     fpr, tpr, _ = roc_curve(label, scores[method])
     roc_auc = auc(fpr, tpr)
-    fpr = np.flipud(fpr)
+    fpr = np.flipud(fpr)  # 将矩阵进行上下翻转
     tpr = np.flipud(tpr)  # select largest tpr at same fpr
     plt.plot(fpr,
              tpr,
@@ -474,6 +476,7 @@ for method in methods:
     tpr_fpr_row = []
     tpr_fpr_row.append("%s-%s" % (method, target))
     for fpr_iter in np.arange(len(x_labels)):
+        # Get "min_fpr_index" from "fpr rate list" below method threshold
         _, min_index = min(
             list(zip(abs(fpr - x_labels[fpr_iter]), range(len(fpr)))))
         tpr_fpr_row.append('%.2f' % (tpr[min_index] * 100))
@@ -485,7 +488,7 @@ plt.xticks(x_labels)
 plt.yticks(np.linspace(0.3, 1.0, 8, endpoint=True))
 plt.xscale('log')
 plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
+plt.ylabel('True Positive Rate (Recall)')
 plt.title('ROC on IJB')
 plt.legend(loc="lower right")
 fig.savefig(os.path.join(save_path, '%s.pdf' % target.lower()))
