@@ -9,12 +9,11 @@ from .resnext import resnext200_32x4d, resnext200_1x64d, resnext200_8x14d, \
                             resnext101_1x64d, resnext101_2x40d, resnext101_4x24d, resnext101_8x14d, resnext101_32x4d, \
                             resnext152_32x4d, resnext152_8x14d, resnext152_4x24d, resnext152_2x40d, resnext152_1x64d
 
-from .resnest import resnest50, resnest101, resnest152, resnest200, resnest269, \
-    resnest152_1x64d, resnest152_2x40d, resnest152_4x24d, resnest152_8x14d, resnest152_32x4d, \
+from .resnest import resnest152_8x14d, resnest101_8x14d, \
     resnest200_8x14d, resnest200_2x40d, resnest200_4x24d, resnest200_1x64d, \
     resnest152_1x64d_r4, resnest200_1x64d_r4
 
-# from .custom.resnext2 import resnext_152 as cu_resnext_152
+# from .resnest import resnest152_8x14d   
 
 def get_model(name, **kwargs):
     # resnet
@@ -35,26 +34,30 @@ def get_model(name, **kwargs):
         return resnext200_8x14d(**kwargs)
     elif name == "resnext200_32x4d":
         return resnext200_32x4d(**kwargs)
+    elif name == "resnext152_8x14d":
+        return resnext152_8x14d(**kwargs)
+    elif name == "resnext101_8x14d":
+        return resnext101_8x14d(**kwargs)
 
 
     # resnest (radix=2)
-    elif name == "resnest152_1x64d":
-        return resnest152_1x64d(**kwargs)
-    elif name == "resnest152_2x40d":
-        return resnest152_2x40d(**kwargs)
-    elif name == "resnest152_4x24d":
-        return resnest152_4x24d(**kwargs)
+    elif name == "resnest101_8x14d":
+        return resnest101_8x14d(**kwargs)
+    # elif name == "resnest152_2x40d":
+    #     return resnest152_2x40d(**kwargs)
+    # elif name == "resnest152_4x24d":
+    #     return resnest152_4x24d(**kwargs)
     elif name == "resnest152_8x14d":
         return resnest152_8x14d(**kwargs)
-    elif name == "resnest152_32x4d":
-        return resnest152_32x4d(**kwargs)
+    # elif name == "resnest152_32x4d":
+    #     return resnest152_32x4d(**kwargs)
 
-    elif name == "resnest152_1x64d_r4":
-        return resnest152_1x64d_r4(**kwargs)
-    elif name == "resnest200_1x64d_r4":
-        return resnest200_1x64d_r4(**kwargs)
-    elif name == "resnest200_1x64d":
-        return resnest200_1x64d(**kwargs)
+    # elif name == "resnest152_1x64d_r4":
+    #     return resnest152_1x64d_r4(**kwargs)
+    # elif name == "resnest200_1x64d_r4":
+    #     return resnest200_1x64d_r4(**kwargs)
+    # elif name == "resnest200_1x64d":
+    #     return resnest200_1x64d(**kwargs)
 
         
 

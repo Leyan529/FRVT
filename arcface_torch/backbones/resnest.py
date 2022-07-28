@@ -9,12 +9,6 @@ import torch.nn.functional as F
 import torch.nn as nn
 from torch.nn.modules.utils import _pair
 
-# from mxnet.context import cpu
-# from mxnet.gluon.block import HybridBlock
-# from mxnet.gluon import nn
-# from mxnet.gluon.nn import BatchNorm
-# import mxnet as mx
-# from mxnet.gluon.nn import Conv2D, Block, HybridBlock, Dense, BatchNorm, Activation
 
 _url_format = 'https://s3.us-west-1.wasabisys.com/resnest/torch/{}-{}.pth'
 
@@ -110,88 +104,149 @@ class DropBlock2D(nn.Module):
     def _compute_gamma(self, x):
         return self.drop_prob / (self.block_size ** 2)
 
-class SplAtConv2d(Module):
-    """Split-Attention Conv2d
-    """
-    def __init__(self, in_channels, channels, kernel_size, stride=(1, 1), padding=(0, 0),
-                 dilation=(1, 1), groups=1, bias=True,
-                 radix=2, reduction_factor=4, norm_layer=None,
-                 dropblock_prob=0.0, **kwargs):
-        super(SplAtConv2d, self).__init__()
-        padding = _pair(padding)
-        inter_channels = max(in_channels*radix//reduction_factor, 32)
-        self.radix = radix
-        self.cardinality = groups
-        self.channels = channels
-        self.dropblock_prob = dropblock_prob
 
-        self.conv = Conv2d(in_channels, channels*radix, kernel_size, stride, padding, dilation,
-                            groups=groups*radix, bias=bias, **kwargs)
-        self.use_bn = norm_layer is not None
-        if self.use_bn:
-            self.bn0 = norm_layer(channels*radix)
-        # self.relu = ReLU(inplace=True)
-        self.relu1 = PReLU(channels*radix)
-        self.fc1 = Conv2d(channels, inter_channels, 1, groups=self.cardinality)
-        if self.use_bn:
-            self.bn1 = norm_layer(inter_channels)
-        self.relu2 = PReLU(inter_channels)
-        self.fc2 = Conv2d(inter_channels, channels*radix, 1, groups=self.cardinality)
-        if dropblock_prob > 0.0:
-            self.dropblock = DropBlock2D(dropblock_prob, 3)
-        self.rsoftmax = rSoftMax(radix, groups)
+class SplitAttention(nn.Module):
+    '''
+    split attention class
+    '''
+    def __init__(self,
+        in_channels,
+        channels,
+        kernel_size,
+        stride=1,
+        padding=0,
+        dilation=1,
+        groups=1,
+        bias=True,
+        radix=2,
+        reduction_factor=4
+    ):
+        super(SplitAttention, self).__init__()
+
+        self.radix = radix
+
+        self.radix_conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=channels*radix,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=dilation,
+                groups=groups*radix,
+                bias=bias
+            ),
+            nn.BatchNorm2d(channels*radix),
+            nn.ReLU(inplace=True)
+            # PReLU(channels*radix),
+        )   
+
+        self.pool = nn.AvgPool2d(3)  
+
+        inter_channels = max(32, in_channels*radix//reduction_factor)
+
+        self.attention = nn.Sequential( #fc1
+            nn.Conv2d(
+                in_channels=channels,
+                out_channels=inter_channels,
+                kernel_size=1,
+                groups=groups
+            ),
+            nn.BatchNorm2d(inter_channels),
+            nn.ReLU(inplace=True),
+            # PReLU(inter_channels),
+            nn.Conv2d( #fc2
+                in_channels=inter_channels,
+                out_channels=channels*radix,
+                kernel_size=1,
+                groups=groups
+            )
+        )
+
+        self.rsoftmax = rSoftMax(
+            groups=groups,
+            radix=radix
+        )
+
+        
 
     def forward(self, x):
-        x = self.conv(x)
-        if self.use_bn:
-            x = self.bn0(x)
-        if self.dropblock_prob > 0.0:
-            x = self.dropblock(x)
-        x = self.relu1(x)
+        
+        # NOTE: comments are ugly...
 
-        batch, rchannel = x.shape[:2]
-        if self.radix > 1:
-            if torch.__version__ < '1.5':
-                splited = torch.split(x, int(rchannel//self.radix), dim=1)
-            else:
-                splited = torch.split(x, rchannel//self.radix, dim=1)
-            gap = sum(splited) 
-        else:
-            gap = x
-        gap = F.adaptive_avg_pool2d(gap, 1)
-        gap = self.fc1(gap)
+        '''
+        input  : |             in_channels               |
+        '''
 
-        if self.use_bn:
-            gap = self.bn1(gap)
-        gap = self.relu2(gap)
+        '''
+        radix_conv : |                radix 0            |               radix 1             | ... |                radix r            |
+                     | group 0 | group 1 | ... | group k | group 0 | group 1 | ... | group k | ... | group 0 | group 1 | ... | group k |
+        '''
+        x = self.radix_conv(x)
 
-        atten = self.fc2(gap)
-        atten = self.rsoftmax(atten).view(batch, -1, 1, 1)
+        '''
+        split :  [ | group 0 | group 1 | ... | group k |,  | group 0 | group 1 | ... | group k |, ... ]
+        sum   :  | group 0 | group 1 | ...| group k |
+        '''
+        B, rC = x.size()[:2]
+        splits = torch.split(x, rC // self.radix, dim=1)
+        gap = sum(splits)
 
-        if self.radix > 1:
-            if torch.__version__ < '1.5':
-                attens = torch.split(atten, int(rchannel//self.radix), dim=1)
-            else:
-                attens = torch.split(atten, rchannel//self.radix, dim=1)
-            out = sum([att*split for (att, split) in zip(attens, splited)])
-        else:
-            out = atten * x
+        # gap = F.adaptive_avg_pool2d(gap, 1) # => ncnn segment fault 
+        # gap = self.pool(gap) 
+        gap = F.avg_pool2d(gap, 3) 
+
+        '''
+        !! becomes cardinal-major !!
+        attention : |             group 0              |             group 1              | ... |              group k             |
+                    | radix 0 | radix 1| ... | radix r | radix 0 | radix 1| ... | radix r | ... | radix 0 | radix 1| ... | radix r |
+        '''
+        att_map = self.attention(gap)
+
+        '''
+        !! transposed to radix-major in rSoftMax !!
+        rsoftmax : same as radix_conv
+        '''
+        att_map = self.rsoftmax(att_map)
+
+        '''
+        split : same as split
+        sum : same as sum
+        '''
+        att_maps = torch.split(att_map, rC // self.radix, dim=1)
+        out = sum([att_map*split for att_map, split in zip(att_maps, splits)])
+
+
+        '''
+        output : | group 0 | group 1 | ...| group k |
+        concatenated tensors of all groups,
+        which split attention is applied
+        '''
+
         return out.contiguous()
 
 class rSoftMax(nn.Module):
-    def __init__(self, radix, cardinality):
-        super().__init__()
+    '''
+    (radix-majorize) softmax class
+    input is cardinal-major shaped tensor.
+    transpose to radix-major
+    '''
+    def __init__(self,
+        groups=1,
+        radix=2
+    ):
+        super(rSoftMax, self).__init__()
+
+        self.groups = groups
         self.radix = radix
-        self.cardinality = cardinality
 
     def forward(self, x):
-        batch = x.size(0)
-        if self.radix > 1:
-            x = x.view(batch, self.cardinality, self.radix, -1).transpose(1, 2)
-            x = F.softmax(x, dim=1)
-            x = x.reshape(batch, -1)
-        else:
-            x = torch.sigmoid(x)
+        B = x.size(0)
+        # transpose to radix-major
+        x = x.view(B, self.groups, self.radix, -1).transpose(1, 2)
+        x = F.softmax(x, dim=1)
+        x = x.view(B, -1, 1, 1)
+
         return x
 
 class GlobalAvgPool2d(nn.Module):
@@ -232,14 +287,14 @@ class Bottleneck(nn.Module):
                 self.dropblock2 = DropBlock2D(dropblock_prob, 3)
             self.dropblock3 = DropBlock2D(dropblock_prob, 3)
 
-        if radix >= 1:
-            self.conv2 = SplAtConv2d(
+        if radix >= 1: 
+            self.conv2 = SplitAttention(
                 group_width, group_width, kernel_size=3,
                 stride=stride, padding=dilation,
                 dilation=dilation, groups=cardinality, bias=False,
                 radix=radix, 
-                norm_layer=norm_layer,
-                dropblock_prob=dropblock_prob) 
+                reduction_factor=4)  # Forward/backward pass size (MB): 599.21, 112,538,744  693.32         
+                # reduction_factor=32)  # Forward/backward pass size (MB): 596.16, 110,899,208
         else:
             self.conv2 = nn.Conv2d(
                 group_width, group_width, kernel_size=3, stride=stride,
@@ -250,6 +305,11 @@ class Bottleneck(nn.Module):
         self.conv3 = nn.Conv2d(
             group_width, planes * 4, kernel_size=1, bias=False)
         self.bn3 = norm_layer(planes*4)
+
+        # self.out3 = nn.Sequential(
+        #     nn.Conv2d(group_width, planes * 4, kernel_size=1, bias=False),
+        #     norm_layer(planes*4)            
+        # )
 
         if last_gamma:
             from torch.nn.init import zeros_
@@ -284,6 +344,7 @@ class Bottleneck(nn.Module):
 
         out = self.conv3(out)
         out = self.bn3(out)
+        # out = self.out3(out)
         if self.dropblock_prob > 0.0:
             out = self.dropblock3(out)
 
@@ -320,9 +381,9 @@ class ResNet(nn.Module):
     fc_scale = 7 * 7
     def __init__(self, block, layers, radix=1, groups=1, bottleneck_width=64,
                  dilated=False, dilation=1,
-                 deep_stem=True, stem_width=64, avg_down=False,
+                 deep_stem=False, stem_width=64, avg_down=False,
                  avd=False, avd_first=False,
-                 dropblock_prob=0.4,
+                 dropblock_prob=0.0,
                  last_gamma=False, norm_layer=nn.BatchNorm2d, dropout = 0.4, fp16=False, **kwargs):
         self.cardinality = groups
         self.bottleneck_width = bottleneck_width
@@ -483,8 +544,6 @@ class ResNet(nn.Module):
             x = self.layer3(x)
             x = self.layer4(x) # torch.Size([2, 2048, 4, 4])
 
-
-            # x = self.a(x)
             x = self.out1(x)
         x = self.fc(x.float() if self.fp16 else x)
         x = self.features(x)
@@ -520,99 +579,30 @@ def get_num_block(num_layers):
 
     return num_blocks
 
-def resnest50(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(50)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=32, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)
-    # if pretrained:
-    #     model.load_state_dict(torch.hub.load_state_dict_from_url(
-    #         resnest_model_urls['resnest50'], progress=True, check_hash=True))
-    return model
 
-def resnest101(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(101)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)
-    # if pretrained:
-    #     model.load_state_dict(torch.hub.load_state_dict_from_url(
-    #         resnest_model_urls['resnest101'], progress=True, check_hash=True))
-    return model
-
-def resnest152(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(152)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)
-    # if pretrained:
-    #     model.load_state_dict(torch.hub.load_state_dict_from_url(
-    #         resnest_model_urls['resnest101'], progress=True, check_hash=True))
-    return model
-
-def resnest200(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(200)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)
-    # if pretrained:
-    #     model.load_state_dict(torch.hub.load_state_dict_from_url(
-    #         resnest_model_urls['resnest200'], progress=True, check_hash=True))
-    return model
-
-def resnest269(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(269)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)
-    # if pretrained:
-    #     model.load_state_dict(torch.hub.load_state_dict_from_url(
-    #         resnest_model_urls['resnest269'], progress=True, check_hash=True))
-    return model
 
 # <groups, width_per_group> =>    (1, 64). (2, 40), (4, 24), (8, 14), (32, 4)
-def resnest152_1x64d(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(152)
+def resnest101_8x14d(pretrained=False, root='~/.encoding/models', **kwargs):
+    num_blocks = get_num_block(101)
     model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)   
-    return model
-
-def resnest152_2x40d(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(152)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=2, bottleneck_width=40,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)   
-    return model
-
-def resnest152_4x24d(pretrained=False, root='~/.encoding/models', **kwargs):
-    num_blocks = get_num_block(152)
-    model = ResNet(Bottleneck, num_blocks,
-                   radix=2, groups=4, bottleneck_width=24,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)   
+                   radix=2, groups=8, bottleneck_width=14,
+                   deep_stem=False, stem_width=64, avg_down=False,
+                   avd=False, avd_first=False, **kwargs)   
     return model
 
 def resnest152_8x14d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(152)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=8, bottleneck_width=14,
-                   deep_stem=True, stem_width=64, avg_down=True,
-                   avd=True, avd_first=False, **kwargs)   
+                   deep_stem=False, stem_width=64, avg_down=False,
+                   avd=False, avd_first=False, **kwargs)   
     return model
 
 def resnest152_32x4d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(152)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=32, bottleneck_width=4,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model
 
@@ -620,7 +610,7 @@ def resnest200_8x14d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(200)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=8, bottleneck_width=14,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model
 
@@ -628,7 +618,7 @@ def resnest200_2x40d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(200)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=2, bottleneck_width=40,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model
 
@@ -637,7 +627,7 @@ def resnest200_4x24d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(200)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=4, bottleneck_width=24,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model
 
@@ -645,7 +635,7 @@ def resnest152_1x64d_r4(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(152)
     model = ResNet(Bottleneck, num_blocks,
                    radix=4, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model   
 
@@ -653,7 +643,7 @@ def resnest200_1x64d(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(200)
     model = ResNet(Bottleneck, num_blocks,
                    radix=2, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model
 
@@ -661,7 +651,7 @@ def resnest200_1x64d_r4(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(200)
     model = ResNet(Bottleneck, num_blocks,
                    radix=4, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model 
 
@@ -669,6 +659,14 @@ def resnest269_1x64d_r4(pretrained=False, root='~/.encoding/models', **kwargs):
     num_blocks = get_num_block(256)
     model = ResNet(Bottleneck, num_blocks,
                    radix=4, groups=1, bottleneck_width=64,
-                   deep_stem=True, stem_width=64, avg_down=True,
+                   deep_stem=False, stem_width=64, avg_down=True,
                    avd=True, avd_first=False, **kwargs)   
     return model 
+
+
+
+# Ref2:
+#     https://github.com/MachineLP/Pytorch_multi_task_classifier/blob/fce381cc51759c91513f2c7c20f010d537f1d993/qdnet_classifier/models/resnest.py
+#     https://github.com/MachineLP/Pytorch_multi_task_classifier/blob/fce381cc51759c91513f2c7c20f010d537f1d993/qdnet_classifier/models/helpers.py
+#     https://github.com/MachineLP/Pytorch_multi_task_classifier/blob/fce381cc51759c91513f2c7c20f010d537f1d993/qdnet_classifier/models/resnet.py
+

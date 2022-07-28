@@ -198,6 +198,7 @@ def evaluate(embeddings, actual_issame, nrof_folds=10, pca=0):
 
 @torch.no_grad()
 def load_bin(path, image_size):
+    print(path)
     try:
         with open(path, 'rb') as f:
             bins, issame_list = pickle.load(f)  # py2
@@ -220,7 +221,8 @@ def load_bin(path, image_size):
             data_list[flip][idx][:] = torch.from_numpy(img.asnumpy())
         if idx % 1000 == 0:
             print('loading bin', idx)
-    print(data_list[0].shape)
+            # break
+    # print(data_list[0].shape)
     return data_list, issame_list
 
 @torch.no_grad()
@@ -262,17 +264,24 @@ def test(data_set, backbone, batch_size, nfolds=10):
     _xnorm /= _xnorm_cnt
 
     embeddings = embeddings_list[0].copy()
-    embeddings = sklearn.preprocessing.normalize(embeddings)
-    acc1 = 0.0
-    std1 = 0.0
-    embeddings = embeddings_list[0] + embeddings_list[1]
-    embeddings = sklearn.preprocessing.normalize(embeddings)
-    print(embeddings.shape)
-    print('infer time', time_consumed)
-    _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=nfolds)
-    acc2, std2 = np.mean(accuracy), np.std(accuracy)
-    return acc1, std1, acc2, std2, _xnorm, embeddings_list
+    try:
+        embeddings = sklearn.preprocessing.normalize(embeddings)
+        acc1 = 0.0
+        std1 = 0.0
+        embeddings = embeddings_list[0] + embeddings_list[1]
+        embeddings = sklearn.preprocessing.normalize(embeddings)
+        print(embeddings.shape)
+        print('infer time', time_consumed)
+        _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=nfolds)
+        acc2, std2 = np.mean(accuracy), np.std(accuracy)
+        return acc1, std1, acc2, std2, _xnorm, embeddings_list
 
+    except Exception as e:
+        print("nan: " , np.isnan(embeddings.values.any()))
+        print("isneginf: " , np.isneginf(embeddings.values.any()))
+        print("isposinf: " , np.isposinf(embeddings.values.any()))
+        return 0.0, 0.0, 0.0, 0.0, _xnorm, embeddings_list
+   
 
 def dumpR(data_set,
           backbone,
