@@ -26,6 +26,8 @@ import utils.checkpoint as cu
 assert torch.__version__ >= "1.9.0", "In order to enjoy the features of the new torch, \
 we have upgraded the torch to 1.9.0. torch before than 1.9.0 may not work in the future."
 
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Train face network')
     parser = argparse.ArgumentParser(description="Distributed Arcface Training in Pytorch")
@@ -49,7 +51,7 @@ except KeyError:
     )
 
 
-def main(args):
+def main(args):    
 
     # get config
     cfg = get_config(args.config)
@@ -90,8 +92,6 @@ def main(args):
     with open( os.path.join(cfg.output, "summary.txt") ,"w") as f:
         [f.write(line) for line in lines]
 
-    # exit(0)
-
     backbone = torch.nn.parallel.DistributedDataParallel(
         module=backbone, broadcast_buffers=False, device_ids=[args.local_rank], bucket_cap_mb=16,
         find_unused_parameters=True)
@@ -99,6 +99,11 @@ def main(args):
     backbone.train()
     # FIXME using gradient checkpoint if there are some unused parameters will cause error
     backbone._set_static_graph()
+
+
+    # checkpoint_file = cu.save_checkpoint(cfg, backbone)
+
+    # exit(0)
 
     margin_loss = CombinedMarginLoss(
         64,
@@ -217,6 +222,7 @@ def main(args):
         if cfg.save_all_states:
             checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch,
                 name = os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
+            os.system("rm " + cfg.output + "/model_epoch_*" )
 
             # checkpoint = {
             #     "epoch": epoch + 1,
