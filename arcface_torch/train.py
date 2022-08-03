@@ -188,8 +188,8 @@ def main(args):
             train_loader.sampler.set_epoch(epoch)
         for _, (img, local_labels) in enumerate(train_loader):
             global_step += 1
-            local_embeddings = backbone(img)
-            loss: torch.Tensor = module_partial_fc(local_embeddings, local_labels)
+            local_embeddings = backbone(img) # get pair embedding
+            loss: torch.Tensor = module_partial_fc(local_embeddings, local_labels)  # input embedding & batch label
 
             if cfg.fp16:
                 amp.scale(loss).backward()
@@ -206,7 +206,7 @@ def main(args):
                     opt.step()
                     opt.zero_grad()
             lr_scheduler.step()
-
+            
             with torch.no_grad():
                 loss_am.update(loss.item(), 1)
                 callback_logging(global_step, loss_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)
@@ -222,28 +222,22 @@ def main(args):
         if cfg.save_all_states:
             checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch,
                 name = os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
-            os.system("rm " + cfg.output + "/model_epoch_*" )
+            os.system("rm " + cfg.output + "/model_epoch_*" )            
 
-            # checkpoint = {
-            #     "epoch": epoch + 1,
-            #     "global_step": global_step,
-            #     "state_dict_backbone": backbone.module.state_dict(),
-            #     "state_dict_softmax_fc": module_partial_fc.state_dict(),
-            #     "state_optimizer": opt.state_dict(),
-            #     "state_lr_scheduler": lr_scheduler.state_dict()
-            # }
-            # torch.save(checkpoint, os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
-
-        # if rank == 0:
-        #     path_module = os.path.join(cfg.output, "model.pt")
-        #     torch.save(backbone.module.state_dict(), path_module)
+        if rank == 0:
+            path_module = os.path.join(cfg.output, "epoch%s.pt"%(epoch))            
+            logging.info("save epoch model")
+            checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
+            logging.info("Wrote epoch model to: {}".format(checkpoint_file))
 
         if cfg.dali:
             train_loader.reset()
 
     if rank == 0:
         path_module = os.path.join(cfg.output, "model.pt")
-        torch.save(backbone.module.state_dict(), path_module)
+        logging.info("save full model")
+        checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
+        logging.info("Wrote full model to: {}".format(checkpoint_file))
 
 
 if __name__ == "__main__":

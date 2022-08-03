@@ -34,18 +34,18 @@ parser = argparse.ArgumentParser(description='do ijb test')
 parser.add_argument('--model-prefix', 
     # default='work_dirs/WebFace42M_resnext152_8x14d_2022_7_20/model_epoch_0000_step_100000.pt', 
     # default='work_dirs/WebFace42M_arcface_r200_2022_7_19/model_epoch_0000_step_090000.pt', 
-    # default="work_dirs/WebFace42M_resnest152_1x64d_2022_7_21/model_epoch_0000_step_100000.pt",
-    default="work_dirs/WebFace42M_resnet_269_2022_7_26/model_epoch_0000_step_142000.pt",
+    # default="work_dirs/WebFace42M_resnest152_8x14d_2022_7_27/model_epoch_0000_step_118000.pt",
+    default="work_dirs/WebFace42M_resnet_269_2022_7_29/epoch3.pt",
     help='path to load model.')
 parser.add_argument('--network', 
     default='resnet_269', 
     type=str, help='')
 
-parser.add_argument('--image-path', default='/home/leyan/DataSet/FR-val/IJBC', type=str, help='')
+parser.add_argument('--image-path', default='/home/leyan/DataSet/FR-val/IJBB', type=str, help='')
 parser.add_argument('--result-dir', default='result_dir', type=str, help='')
 parser.add_argument('--batch-size', default=128, type=int, help='')
 parser.add_argument('--job', default='insightface', type=str, help='job name')
-parser.add_argument('--target', default='IJBC', type=str, help='target, set to IJBC or IJBB')
+parser.add_argument('--target', default='IJBB', type=str, help='target, set to IJBC or IJBB')
 args = parser.parse_args()
 
 target = args.target
@@ -444,7 +444,7 @@ if not os.path.exists(save_path):
 score_save_file = os.path.join(save_path, "%s.npy" % target.lower())
 np.save(score_save_file, score)
 
-# # Step 5: Get ROC Curves and TPR@FPR Table
+# Step 5: Get ROC Curves and TPR@FPR Table
 
 
 
@@ -492,32 +492,7 @@ plt.ylabel('True Positive Rate (Recall)')
 plt.title('ROC on IJB')
 plt.legend(loc="lower right")
 fig.savefig(os.path.join(save_path, '%s.pdf' % target.lower()))
-print(tpr_fpr_table)
 
-"""
-resnext152_8x14d
-+-----------+-------+-------+--------+-------+-------+-------+
-|  Methods  | 1e-06 | 1e-05 | 0.0001 | 0.001 |  0.01 |  0.1  |
-+-----------+-------+-------+--------+-------+-------+-------+
-| ijbc-IJBC | 64.86 | 75.80 | 85.13  | 91.84 | 96.29 | 98.73 |
-+-----------+-------+-------+--------+-------+-------+-------+
-"""
-
-"""
-r200
-+-----------+-------+-------+--------+-------+-------+-------+
-|  Methods  | 1e-06 | 1e-05 | 0.0001 | 0.001 |  0.01 |  0.1  |
-+-----------+-------+-------+--------+-------+-------+-------+
-| ijbc-IJBC | 28.17 | 41.40 | 55.00  | 68.52 | 81.59 | 92.87 |
-+-----------+-------+-------+--------+-------+-------+-------+
-"""
-
-
-"""
-resnet269
-+-----------+-------+-------+--------+-------+-------+-------+
-|  Methods  | 1e-06 | 1e-05 | 0.0001 | 0.001 |  0.01 |  0.1  |
-+-----------+-------+-------+--------+-------+-------+-------+
-| ijbc-IJBC | 80.91 | 89.33 | 93.66  | 96.45 | 98.17 | 99.33 |
-+-----------+-------+-------+--------+-------+-------+-------+
-"""
+with open(os.path.join(save_path, "result.txt"), "w") as f:
+    f.write(tpr_fpr_table.get_string())
+    print(tpr_fpr_table)

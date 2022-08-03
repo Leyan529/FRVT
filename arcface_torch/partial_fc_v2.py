@@ -50,20 +50,21 @@ class PartialFC_V2(torch.nn.Module):
         assert (
             distributed.is_initialized()
         ), "must initialize distributed before create this"
-        self.rank = distributed.get_rank()
-        self.world_size = distributed.get_world_size()
+        # 一個gpu對應一個thread
+        self.rank = distributed.get_rank()              # 返回當前進程的排名。
+        self.world_size = distributed.get_world_size() # 返回分佈式組中的進程數。
 
         self.dist_cross_entropy = DistCrossEntropy()
         self.embedding_size = embedding_size
         self.sample_rate: float = sample_rate
         self.fp16 = fp16
-        self.num_local: int = num_classes // self.world_size + int(
+        self.num_local: int = num_classes // self.world_size + int(  # 分配每個gpu在local端訓練的類別樣本數
             self.rank < num_classes % self.world_size
         )
-        self.class_start: int = num_classes // self.world_size * self.rank + min(
+        self.class_start: int = num_classes // self.world_size * self.rank + min(  # 分配每個gpu在local端訓練的類別起始位置 (idx_n ~ idx_n+1)
             self.rank, num_classes % self.world_size
         )
-        self.num_sample: int = int(self.sample_rate * self.num_local)
+        self.num_sample: int = int(self.sample_rate * self.num_local) # 計算每個gpu在local端需要取樣的樣本數
         self.last_batch_size: int = 0
 
         self.is_updated: bool = True
@@ -91,17 +92,19 @@ class PartialFC_V2(torch.nn.Module):
         with torch.no_grad():
             positive = torch.unique(labels[index_positive], sorted=True).cuda()
             if self.num_sample - positive.size(0) >= 0:
-                perm = torch.rand(size=[self.num_local]).cuda()
-                perm[positive] = 2.0
-                index = torch.topk(perm, k=self.num_sample)[1].cuda()
+                perm = torch.rand(size=[self.num_local]).cuda() # 回傳整個total類別數的隨機分佈
+                perm[positive] = 2.0                            # 標記正樣本權重為2.0
+                index = torch.topk(perm, k=self.num_sample)[1].cuda() # 取樣一定比率的有效樣本索引
                 index = index.sort()[0].cuda()
             else:
                 index = positive
-            self.weight_index = index
+            self.weight_index = index # 紀錄負樣本權重索引
 
+            # 維持原有的排序, 找到適合的索引並插入,並回傳插入後的新索引 
+            # => 重組在該顆gpu的有效訓練類別索引 (原有的batch正樣本類別 + 加上根據sample rate取樣部份的負樣本類別)
             labels[index_positive] = torch.searchsorted(index, labels[index_positive])
 
-        return self.weight[self.weight_index]
+        return self.weight[self.weight_index] #回傳指定覆載索引的權重
 
     def forward(
         self,
@@ -143,11 +146,13 @@ class PartialFC_V2(torch.nn.Module):
         labels = torch.cat(_gather_labels)
 
         labels = labels.view(-1, 1)
+
+        # decide label is in valid address
         index_positive = (self.class_start <= labels) & (
             labels < self.class_start + self.num_local
         )
-        labels[~index_positive] = -1
-        labels[index_positive] -= self.class_start
+        labels[~index_positive] = -1 # give -1 to unvalid label address
+        labels[index_positive] -= self.class_start # redirect address to index-0
 
         if self.sample_rate < 1:
             weight = self.sample(labels, index_positive)
@@ -156,13 +161,13 @@ class PartialFC_V2(torch.nn.Module):
 
         with torch.cuda.amp.autocast(self.fp16):
             norm_embeddings = normalize(embeddings)
-            norm_weight_activated = normalize(weight)
-            logits = linear(norm_embeddings, norm_weight_activated)
+            norm_weight_activated = normalize(weight) # 歸一化覆載均衡權重
+            logits = linear(norm_embeddings, norm_weight_activated) # 透過當前gpu的覆載均衡權重, 映射至一個多分類機率向量
         if self.fp16:
             logits = logits.float()
         logits = logits.clamp(-1, 1)
 
-        logits = self.margin_softmax(logits, labels)
+        logits = self.margin_softmax(logits, labels) 
         loss = self.dist_cross_entropy(logits, labels)
         return loss
 
