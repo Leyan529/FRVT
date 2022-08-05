@@ -55,10 +55,10 @@ def save_checkpoint(cfg, model, module_partial_fc=None, optimizer=None, lr_sched
     checkpoint = {
         "epoch": epoch,
         "global_step": global_step,
-        "state_dict_backbone": model.module.state_dict(),
-        "state_dict_softmax_fc": module_partial_fc.state_dict(),
-        "state_optimizer": optimizer.state_dict(),
-        "state_lr_scheduler": lr_scheduler.state_dict()
+        "state_dict_backbone": model.module.state_dict() ,
+        "state_dict_softmax_fc": module_partial_fc.state_dict() if module_partial_fc else None ,
+        "state_optimizer": optimizer.state_dict() if optimizer else None ,
+        "state_lr_scheduler": lr_scheduler.state_dict() if lr_scheduler else None 
     }
 
     if conf:
@@ -74,7 +74,7 @@ def save_checkpoint(cfg, model, module_partial_fc=None, optimizer=None, lr_sched
     return checkpoint_file
 
 
-def load_checkpoint(checkpoint_file, model, partial_fc=None, optimizer=None, exp_lr_scheduler=None):
+def load_checkpoint(checkpoint_file, model, partial_fc=None, optimizer=None, exp_lr_scheduler=None, rank=0):
     """Loads the checkpoint from the given file."""
     assert os.path.exists(checkpoint_file), "Checkpoint '{}' not found".format(
         checkpoint_file
@@ -85,9 +85,12 @@ def load_checkpoint(checkpoint_file, model, partial_fc=None, optimizer=None, exp
     start_epoch = dict_checkpoint["epoch"]
     global_step = dict_checkpoint["global_step"]
     model.module.load_state_dict(dict_checkpoint["state_dict_backbone"])
-    partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
-    optimizer.load_state_dict(dict_checkpoint["state_optimizer"])
-    exp_lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
+
+    if rank == 0:
+        partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
+        optimizer.load_state_dict(dict_checkpoint["state_optimizer"])
+        exp_lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
+        
     del dict_checkpoint
    
     return start_epoch, global_step

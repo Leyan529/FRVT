@@ -31,7 +31,7 @@ os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 def parse_args():
     parser = argparse.ArgumentParser(description='Train face network')
     parser = argparse.ArgumentParser(description="Distributed Arcface Training in Pytorch")
-    parser.add_argument("--config", type=str, help="py config file", required=False, default="configs/webface42m_bottlenet_resnet_local.py")
+    parser.add_argument("--config", type=str, help="py config file", required=False, default="configs/webface42m_bottlenet_resnet.py")
     parser.add_argument("--local_rank", type=int, default=0, help="local_rank")
     args = parser.parse_args()
     return args
@@ -87,7 +87,7 @@ def main(args):
     with redirect_stdout(f):        
         summary(backbone, input_size=(1, IM_SHAPE[2], IM_SHAPE[0], IM_SHAPE[1]))
     lines = f.getvalue()
-    print("".join(lines))
+    # print("".join(lines))
 
     with open( os.path.join(cfg.output, "summary.txt") ,"w") as f:
         [f.write(line) for line in lines]
@@ -148,21 +148,19 @@ def main(args):
 
     start_epoch = 0
     global_step = 0
-    if cfg.resume and cu.has_checkpoint(cfg):
+   
+    if cfg.resume and cfg.restore_epoch != 0:
+        dict_checkpoint = os.path.join(cfg.output, f"checkpoint_epoch_{cfg.restore_epoch}_gpu_{rank}.pt")
+        logging.info("Load resume checkpoints: {}".format(dict_checkpoint))
+        start_epoch, global_step = cu.load_checkpoint(
+            dict_checkpoint, backbone, partial_fc=module_partial_fc, optimizer=opt, exp_lr_scheduler=lr_scheduler, rank=rank)
+        del dict_checkpoint
+
+    elif cfg.resume and cu.has_checkpoint(cfg):
         last_checkpoint = cu.get_last_checkpoint(cfg)
         start_epoch, global_step = cu.load_checkpoint(
             last_checkpoint, backbone, partial_fc=module_partial_fc, optimizer=opt, exp_lr_scheduler=lr_scheduler)
         logging.info("Load path: %s" %(last_checkpoint))
-
-
-        # dict_checkpoint = torch.load(os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
-        # start_epoch = dict_checkpoint["epoch"]
-        # global_step = dict_checkpoint["global_step"]
-        # backbone.module.load_state_dict(dict_checkpoint["state_dict_backbone"])
-        # module_partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
-        # opt.load_state_dict(dict_checkpoint["state_optimizer"])
-        # lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
-        # del dict_checkpoint
 
     for key, value in cfg.items():
         num_space = 25 - len(key)
@@ -215,17 +213,20 @@ def main(args):
                     callback_verification(global_step, backbone)
                 
                     if rank == 0:
+                        os.system("rm " + cfg.output + "/model_epoch_*" )
                         logging.info("save ckpt")
                         checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch)
                         logging.info("Wrote checkpoint to: {}".format(checkpoint_file))
+            # break        
 
         if cfg.save_all_states:
+            logging.info("save all states")
             checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch,
-                name = os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
-            os.system("rm " + cfg.output + "/model_epoch_*" )            
+                name = os.path.join(cfg.output, f"checkpoint_epoch_{epoch}_gpu_{rank}.pt"))  
+            logging.info("wrote all states")
 
         if rank == 0:
-            path_module = os.path.join(cfg.output, "epoch%s.pt"%(epoch))            
+            path_module = os.path.join(cfg.output, f"epoch_{epoch}.pt")            
             logging.info("save epoch model")
             checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
             logging.info("Wrote epoch model to: {}".format(checkpoint_file))
