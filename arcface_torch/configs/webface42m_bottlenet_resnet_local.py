@@ -16,12 +16,12 @@ config = edict()
 config.margin_list = (1.0, 0.5, 0.0)
 
 # config.network = "r200"
-# config.network = "resnet_269"  
+config.network = "resnet_269"  
 
 """<cardinality, bottleneck_width> =>    (1, 64). (2, 40), (4, 24), (8, 14), (32, 4)"""
 # config.network = "resnext200_1x64d" 
 # config.network = "resnext200_2x40d" 
-config.network = "resnext200_4x24d" 
+# config.network = "resnext200_4x24d" 
 # config.network = "resnext200_8x14d"
 # config.network = "resnext200_32x4d" 
 
@@ -29,6 +29,7 @@ config.network = "resnext200_4x24d"
 # config.network = "resnest152_2x40d" 
 # config.network = "resnest152_4x24d" 
 # config.network = "resnest152_8x14d"
+# config.network = "resnest101_8x14d"
 # config.network = "resnest152_32x4d"
 
 # config.network = "resnext200_8x14d"
@@ -57,12 +58,12 @@ config.weight_decay = 5e-4
 config.dropout_ratio = 0.4
 # config.batch_size = 128
 
-config.batch_size = 5
+config.batch_size = 8    # total_batch_size = batch_size * num_gpus
 # config.batch_size = 28
 # config.batch_size = 40
 config.lr = 0.1
 # config.verbose = 2
-config.verbose = 1000
+config.verbose = 2000
 config.dali = False
 config.IM_SHAPE = (112, 112, 3)
 
@@ -92,9 +93,10 @@ config.num_epoch = 20
 config.warmup_epoch = 0
 # config.val_targets = ['lfw', 'calfw', 'cplfw', 'cfp_fp', "agedb_30"]
 # config.val_targets = ['lfw', 'calfw', 'cfp_fp', "agedb_30"]
-config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
+# config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
+config.val_targets = ['cplfw']
 
-config.resume = True
+config.resume = False
 config.output = "work_dirs/%s_"%(config.rec) + config.network + "_%s_%s_%s"%(t.tm_year, t.tm_mon, t.tm_mday)
 # config.WEIGHTS= config.output + "/" + "model_epoch_0000_step_020000.pt"
 config.WEIGHTS= ""

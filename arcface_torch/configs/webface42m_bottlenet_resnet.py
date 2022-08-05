@@ -16,9 +16,9 @@ config.margin_list = (1.0, 0.5, 0.0)
 
 # 07/15
 # config.network = "r200"
-# config.network = "resnet_269" 
+config.network = "resnet_269" 
 # config.network = "resnext152_8x14d" 
-config.network = "resnest152_1x64d"
+# config.network = "resnest152_8x14d"
 
 
 config.embedding_size = 512
@@ -28,11 +28,11 @@ config.momentum = 0.9
 config.weight_decay = 5e-4
 config.dropout_ratio = 0.4
 
-config.batch_size = 32
+config.batch_size = 32    # total_batch_size = batch_size * num_gpus * gradient_acc
 config.gradient_acc = 4
 
 config.lr = 0.1
-config.verbose = 2000
+config.verbose = 40000
 config.dali = False
 config.IM_SHAPE = (112, 112, 3)
 
@@ -53,10 +53,17 @@ config.num_epoch = 20
 config.warmup_epoch = 0 # init warm lr
 config.val_targets = ['lfw', 'calfw', 'cplfw', 'cfp_ff','cfp_fp', "agedb_30", "vgg2_fp"]
 
-config.resume = False
+config.resume = True
 config.output = "work_dirs/%s_"%(config.rec) + config.network + "_%s_%s_%s"%(t.tm_year, t.tm_mon, t.tm_mday)
-config.WEIGHTS= config.output + "/" + "model_epoch_0000_step_060000.pt"
-config.WEIGHTS= ""
+config.restore_epoch = 5
+# config.WEIGHTS= config.output + "/" + "model_epoch_0005_step_840000.pt"
+
+
+# config.resume = False
+# config.output = "work_dirs/%s_"%(config.rec) + config.network + "_%s_%s_%s"%(t.tm_year, t.tm_mon, t.tm_mday)
+# config.WEIGHTS= ""
+
+
 # config.WEIGHT_FROM = "work_dirs/ms1m-retinaface-t1_resnest200_8x14d_2022_7_19/model_epoch_0000_step_006000.pt"
 
 # if not os.path.exists(config.WEIGHTS):
