@@ -69,6 +69,8 @@ def save_checkpoint(cfg, model, module_partial_fc=None, optimizer=None, lr_sched
     if name==None:
         checkpoint_file = get_checkpoint(cfg, global_step, epoch)
     else:
+        # if not os.path.exists(os.path.dirname(name)):
+        #     os.makedirs(os.path.dirname(name))
         checkpoint_file = name
     torch.save(checkpoint, checkpoint_file, _use_new_zipfile_serialization=False)
     return checkpoint_file
@@ -86,10 +88,10 @@ def load_checkpoint(checkpoint_file, model, partial_fc=None, optimizer=None, exp
     global_step = dict_checkpoint["global_step"]
     model.module.load_state_dict(dict_checkpoint["state_dict_backbone"])
 
-    if rank == 0:
-        partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
-        optimizer.load_state_dict(dict_checkpoint["state_optimizer"])
-        exp_lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
+
+    partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
+    optimizer.load_state_dict(dict_checkpoint["state_optimizer"])
+    exp_lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
         
     del dict_checkpoint
    

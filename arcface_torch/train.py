@@ -148,6 +148,7 @@ def main(args):
 
     start_epoch = 0
     global_step = 0
+    load_tmp = False
    
     if cfg.resume and cfg.restore_epoch != 0:
         dict_checkpoint = os.path.join(cfg.output, f"checkpoint_epoch_{cfg.restore_epoch}_gpu_{rank}.pt")
@@ -155,6 +156,7 @@ def main(args):
         start_epoch, global_step = cu.load_checkpoint(
             dict_checkpoint, backbone, partial_fc=module_partial_fc, optimizer=opt, exp_lr_scheduler=lr_scheduler, rank=rank)
         del dict_checkpoint
+        load_tmp = True
 
     elif cfg.resume and cu.has_checkpoint(cfg):
         last_checkpoint = cu.get_last_checkpoint(cfg)
@@ -179,13 +181,18 @@ def main(args):
 
     loss_am = AverageMeter()
     amp = torch.cuda.amp.grad_scaler.GradScaler(growth_interval=100)
+    ep_steps = len(train_loader)
 
     for epoch in range(start_epoch, cfg.num_epoch):
-
         if isinstance(train_loader, DataLoader):
             train_loader.sampler.set_epoch(epoch)
-        for _, (img, local_labels) in enumerate(train_loader):
-            global_step += 1
+        for it_step, (img, local_labels) in enumerate(train_loader):                     
+            if(load_tmp and global_step >= (it_step + ep_steps * epoch)): 
+                if (it_step % cfg.frequent == 0): 
+                    logging.info("pass iteration %d" %(it_step + ep_steps * epoch))
+                continue                            # For temporary save tmp_checkpoint_epoch.pt
+            global_step += 1   
+            
             local_embeddings = backbone(img) # get pair embedding
             loss: torch.Tensor = module_partial_fc(local_embeddings, local_labels)  # input embedding & batch label
 
@@ -217,26 +224,39 @@ def main(args):
                         logging.info("save ckpt")
                         checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch)
                         logging.info("Wrote checkpoint to: {}".format(checkpoint_file))
-            # break        
+
+
+                if global_step % 2000 == 0 and global_step > 0:
+                # if global_step % 4 == 0 and global_step > 0:
+                    logging.info("save checkpoint step {}".format(global_step))
+                    checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch,
+                        name = os.path.join(cfg.output, f"checkpoint_epoch_{epoch}_gpu_{rank}.pt"))
+                    logging.info("Wrote checkpoint to: {}".format(checkpoint_file))
+
+            # break   
+
+        load_tmp = False
 
         if cfg.save_all_states:
-            logging.info("save all states")
+            dir_name = os.path.join(cfg.output, f"epoch_{epoch}")
+            if (rank == 0) and (not os.path.exists(dir_name)): os.makedirs(dir_name)
+            logging.info("save all states")            
             checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch,
-                name = os.path.join(cfg.output, f"checkpoint_epoch_{epoch}_gpu_{rank}.pt"))  
+                name = os.path.join(cfg.output, f"epoch_{epoch}", f"epoch_gpu_{rank}.pt"))  
             logging.info("wrote all states")
 
-        if rank == 0:
-            path_module = os.path.join(cfg.output, f"epoch_{epoch}.pt")            
-            logging.info("save epoch model")
-            checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
-            logging.info("Wrote epoch model to: {}".format(checkpoint_file))
+        # if rank == 0:
+        #     path_module = os.path.join(cfg.output, f"epoch_{epoch}.pt")            
+        #     logging.info("save epoch model")
+        #     checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
+        #     logging.info("Wrote epoch model to: {}".format(checkpoint_file))
 
         if cfg.dali:
             train_loader.reset()
 
     if rank == 0:
-        path_module = os.path.join(cfg.output, "model.pt")
         logging.info("save full model")
+        path_module = os.path.join(cfg.output, f"model_{rank}.pt")
         checkpoint_file = cu.save_checkpoint(cfg, backbone, module_partial_fc, opt, lr_scheduler, global_step, epoch, name=path_module)
         logging.info("Wrote full model to: {}".format(checkpoint_file))
 
