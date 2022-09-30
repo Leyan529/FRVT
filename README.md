@@ -7,8 +7,8 @@
   * Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
   * Reference: [AdaFace: Quality Adaptive Margin for Face Recognition](https://github.com/mk-minchul/AdaFace)
 
-## ncnn_tool:
-  * Include two zip files 
+## [Tencent/ncnn/20220701](https://github.com/Tencent/ncnn/releases/tag/20220701):
+  * Prebuild-tools and library 
     - Shared library(.so) for build cmake project
     - UnShared library(.a): for create transform ncnn format model
 
