@@ -1,9 +1,9 @@
 # FRVT
 
-## arcface_torch:
+## Arcface_torch:
   * Insightface Face Distributed Arcface Training in Pytorch 
   
-## arcface_ada:
+## Arcface_ada:
   * Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
   * Reference: [AdaFace: Quality Adaptive Margin for Face Recognition](https://github.com/mk-minchul/AdaFace)
 
@@ -13,7 +13,8 @@
     - UnShared library(.a): for create transform ncnn format model
 
 ## FRVT submission:
-  1:1 test project(11)
+  * Reference Repository for the Face Recognition Vendor Test ([FRVT](https://github.com/usnistgov/frvt))
+  * And only using FRVT 1:1 validation package 
   Include: /11/src/nullImpl
    * FaceDetection
    * FaceRecognize
