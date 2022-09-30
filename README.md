@@ -1,13 +1,12 @@
 # FRVT
 
-
-### arc_torch:
+## arc_torch:
   Insightface FR training code
 
-### ncnn_tool:
+## ncnn_tool:
   include two zip files to transform model & share libs for submission project
 
-### FRVT submission:
+## FRVT submission:
   1:1 test project(11)
   Include: /11/src/nullImpl
    * FaceDetection
