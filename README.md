@@ -7,7 +7,7 @@
   * Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
   * Reference: [AdaFace: Quality Adaptive Margin for Face Recognition](https://github.com/mk-minchul/AdaFace)
 
-## [ncnn_tool]:
+## ncnn_tool:
   * ncnn is a high-performance neural network forward computing framework optimized for mobile phones
   * Using [20220701](https://github.com/Tencent/ncnn/releases/tag/20220701) version
   * Prebuild-tools and library 
