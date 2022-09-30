@@ -2,6 +2,7 @@
 
 ## Update from Original arcface
 1. Update partial_fc loss function
+
 ![image](https://user-images.githubusercontent.com/24097516/193223429-76bb879b-e66f-4895-8d09-d90b59f3b53f.png)
 
 2. update train margin to adaface loss
