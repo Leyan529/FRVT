@@ -1,7 +1,7 @@
 ## ncnn-20220701-ubuntu-1804
 ### Usage
-* onnx2ncnn: ./onnx2ncnn [onnxpb] [ncnnparam] [ncnnbin]
-* ncnnoptimize: ./ncnnoptimize [inparam] [inbin] [outparam] [outbin] [flag] [cutstart] [cutend]
+* **onnx2ncnn**: ./onnx2ncnn [onnxpb] [ncnnparam] [ncnnbin]
+* **ncnnoptimize**: ./ncnnoptimize [inparam] [inbin] [outparam] [outbin] [flag] [cutstart] [cutend]
 
 ### How to use
   ```
