@@ -1,10 +1,9 @@
 ## ncnn-20220701-ubuntu-1804
-### How to use
-* onnx2ncnn 
-  * Usage: ./onnx2ncnn [onnxpb] [ncnnparam] [ncnnbin]
-* ncnnoptimize
-  * usage: ./ncnnoptimize [inparam] [inbin] [outparam] [outbin] [flag] [cutstart] [cutend]
+### Usage
+* onnx2ncnn: ./onnx2ncnn [onnxpb] [ncnnparam] [ncnnbin]
+* ncnnoptimize: ./ncnnoptimize [inparam] [inbin] [outparam] [outbin] [flag] [cutstart] [cutend]
 
+### How to use
   ```
   ./onnx2ncnn scrfd_10g_bnkps_shape256x256.onnx output/scrfd_10g.param output/scrfd_10g.bin
   ./ncnnoptimize output/scrfd_10g.param output/scrfd_10g.bin opt-output/scrfd_10g-opt.param opt-output/scrfd_10g-opt.bin 1
