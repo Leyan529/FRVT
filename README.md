@@ -20,11 +20,11 @@
   * Include task for FaceDetection & FaceRecognize
 
   ### How to use:
-     ```
-     mkdir -p /11/src/nullImpl/build 
-     cd /11/src/nullImpl/build
-     cmake .. && make clean && make && ./nullImpl
-     ```
+  ```
+  mkdir -p /11/src/nullImpl/build 
+  cd /11/src/nullImpl/build
+  cmake .. && make clean && make && ./nullImpl
+  ```
 
 ## Experminent
    - python: 3.6.13
