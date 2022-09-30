@@ -8,7 +8,7 @@
   * Reference: AdaFace: Quality Adaptive Margin for Face Recognition
 
 ## ncnn_tool:
-  include two zip files to transform model & share libs for submission project
+  * Include two zip files to transform model & share libs for submission project
 
 ## FRVT submission:
   1:1 test project(11)
