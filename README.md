@@ -9,8 +9,8 @@
 
 ## ncnn_tool:
   * Include two zip files 
-     - Shared library(.so) for build cmake project
-     - UnShared library(.a): for create transform ncnn format model
+    - Shared library(.so) for build cmake project
+    - UnShared library(.a): for create transform ncnn format model
 
 ## FRVT submission:
   1:1 test project(11)
