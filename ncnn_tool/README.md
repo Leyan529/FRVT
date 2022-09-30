@@ -16,9 +16,11 @@
   ```
 
 ## ncnn-20220701-ubuntu-1804-shared
-
-1. usage
 - Shared library(.so) for build cmake project
-- UnShared library(.a): for create transform ncnn format model
+### Copy ./lib/*.so to 1:1 ./lib folder
+![image](https://user-images.githubusercontent.com/24097516/193230702-db633bb5-05f2-4cfc-9c1e-8bc44e47d62d.png)
+
+### Copy include/* to 1:1 src/include
+![image](https://user-images.githubusercontent.com/24097516/193230915-b687dfbf-c869-47f7-95cd-d07611e065a9.png)
 
 https://github.com/Tencent/ncnn/releases
