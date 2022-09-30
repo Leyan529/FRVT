@@ -1,7 +1,11 @@
 # FRVT
 
-## arc_torch:
-  Insightface FR training code
+## arcface_torch:
+  Insightface Face Distributed Arcface Training in Pytorch 
+  
+## arcface_ada:
+  Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
+  Reference: AdaFace: Quality Adaptive Margin for Face Recognition
 
 ## ncnn_tool:
   include two zip files to transform model & share libs for submission project
