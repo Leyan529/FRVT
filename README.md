@@ -5,7 +5,7 @@
   
 ## arcface_ada:
   * Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
-  * Reference: AdaFace: Quality Adaptive Margin for Face Recognition
+  * Reference: [AdaFace: Quality Adaptive Margin for Face Recognition](https://github.com/mk-minchul/AdaFace)
 
 ## ncnn_tool:
   * Include two zip files 
