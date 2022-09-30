@@ -24,10 +24,10 @@
      mkdir -p /11/src/nullImpl/build 
      cd /11/src/nullImpl/build
      cmake .. && make clean && make && ./nullImpl
-   ```
+     ```
 
 ## **[Experminent]**
-- **Training environment setting**
+ - **Training environment setting**
     - python: 3.6.13
     - pytorch: 1.9.0+cu102
     - ubuntu: 18.04.03
