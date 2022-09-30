@@ -19,9 +19,9 @@
   * And only using FRVT 1:1 validation package 
   * Include task for FaceDetection & FaceRecognize
 
-### How to use:
-   ```
-   mkdir -p /11/src/nullImpl/build 
-   cd /11/src/nullImpl/build
-   cmake .. && make clean && make && ./nullImpl
+  ### How to use:
+     ```
+     mkdir -p /11/src/nullImpl/build 
+     cd /11/src/nullImpl/build
+     cmake .. && make clean && make && ./nullImpl
    ```
