@@ -25,3 +25,11 @@
      cd /11/src/nullImpl/build
      cmake .. && make clean && make && ./nullImpl
    ```
+
+## **[Experminent]**
+- **Training environment setting**
+    - python: 3.6.13
+    - pytorch: 1.9.0+cu102
+    - ubuntu: 18.04.03
+    - NVIDIA cuda: 10.2.89
+    - NVIDIA cuDNN 7.6.5
