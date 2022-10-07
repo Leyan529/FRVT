@@ -1,5 +1,29 @@
 # Distributed Arcface Training in Pytorch
 
+## Update from Original arcface
+1. Update partial_fc loss function
+
+![image](https://user-images.githubusercontent.com/24097516/193223429-76bb879b-e66f-4895-8d09-d90b59f3b53f.png)
+
+2. Update train margin to adaface loss
+
+![image](https://user-images.githubusercontent.com/24097516/193223496-f9d23c48-59e0-4a9b-8fc1-6f1d8349938c.png)
+
+3. Update pytorch dataset to load CustomImageFolderDataset
+
+![image](https://user-images.githubusercontent.com/24097516/193223557-09a1e057-885f-4957-b996-6a661c8b3c37.png)
+
+4. Add augmenter.py for adaface dataset transform
+   * RandomResizedCrop augmentation
+   * low resolution augmentation
+   * photometric augmentation
+
+![image](https://user-images.githubusercontent.com/24097516/193223610-3c22fab0-3ee9-4687-89b6-14d68edac7d4.png)
+
+5. Update resume training with pretrain scheduler
+
+![image](https://user-images.githubusercontent.com/24097516/193223770-285174b0-446e-4ba2-917f-2bb32713d07e.png)
+
 This is a deep learning library that makes face recognition efficient, and effective, which can train tens of millions
 identity on a single server.  
 
