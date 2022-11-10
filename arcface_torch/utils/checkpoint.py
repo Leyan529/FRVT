@@ -69,8 +69,8 @@ def save_checkpoint(cfg, model, module_partial_fc=None, optimizer=None, lr_sched
     if name==None:
         checkpoint_file = get_checkpoint(cfg, global_step, epoch)
     else:
-        # if not os.path.exists(os.path.dirname(name)):
-        #     os.makedirs(os.path.dirname(name))
+        if not os.path.exists(os.path.dirname(name)):
+            os.makedirs(os.path.dirname(name))
         checkpoint_file = name
     torch.save(checkpoint, checkpoint_file, _use_new_zipfile_serialization=False)
     return checkpoint_file

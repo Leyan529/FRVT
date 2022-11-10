@@ -5,6 +5,7 @@ import onnxruntime as ort
 import cv2
 import datetime
 # import utils.checkpoint as cu
+import os
 
 def convert_onnx(net, path_module, output, opset=10, simplify=False):
     assert isinstance(net, torch.nn.Module)
@@ -43,6 +44,8 @@ def convert_onnx(net, path_module, output, opset=10, simplify=False):
     with open(onnx_graph_path, "w", encoding="utf-8") as f:
         f.write(graph)
 
+    # os.system("utils/fr_tran.sh")
+    # exit(0)
     # Test forward with onnx session (test image) 
     # ort_session = ort.InferenceSession(output, providers=['CUDAExecutionProvider'])     
     ort_session = ort.InferenceSession(output, providers=['CPUExecutionProvider'])  
@@ -81,16 +84,15 @@ if __name__ == '__main__':
     parser.add_argument('--input', type=str,       
         # default="work_dirs/ms1m-retinaface-t1_resnest200_8x14d_2022_7_20/model_epoch_0000_step_000300.pt",
         # default="work_dirs/ms1m-retinaface-t1_resnext200_8x14d_2022_7_19/model_epoch_0000_step_260000.pt",
-        # default="work_dirs/ms1m-retinaface-t1_resnest200_1x64d_r4_2022_7_20/model_epoch_0000_step_058000.pt",
-        # default="work_dirs/WebFace42M_resnext152_8x14d_2022_7_20/model_epoch_0000_step_080000.pt",
-        # default="work_dirs/WebFace42M_resnest152_1x64d_2022_7_21/model_epoch_0000_step_096000.pt",
-        default="work_dirs/WebFace42M_resnest152_8x14d_2022_7_27/model_epoch_0000_step_040000.pt",
-        # default="work_dirs/WebFace42M_resnet_269_2022_7_26/model_epoch_0000_step_142000.pt",
+        # default="work_dirs/ms1m-retinaface-t1_r200_local/checkpoint_epoch_0_gpu_0.pt",
+        # default="work_dirs/WebFace42M_resnest152_8x14d/checkpoint_epoch_0_gpu_0.pt",
+        default="work_dirs/r50/checkpoint_gpu_0_19_2220000.pt",
+        # default="work_dirs/arcface_LResNet269E/LResnetNet269.pt",
         help='input backbone.pth file or path')
     parser.add_argument('--output', type=str, default=None, help='output onnx path')
     # parser.add_argument('--network', type=str, default="bottlenet_resnet_269", help='backbone network')
     # parser.add_argument('--network', type=str, default="resnext200_8x14d", help='backbone network')
-    parser.add_argument('--network', type=str, default="resnest152_8x14d", help='backbone network')
+    parser.add_argument('--network', type=str, default="r50", help='backbone network')
     parser.add_argument('--simplify', type=bool, default=True, help='onnx simplify')
     parser.add_argument("--input_shape", type=int, nargs="+", default=(112, 112, 3))
     args = parser.parse_args()

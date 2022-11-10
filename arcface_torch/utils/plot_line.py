@@ -5,8 +5,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+dir = "WebFace42M_resnet_269_2022_9_10"
 model = "resnet_269"
-ep = 13
+ep = 20
 
 folder = ["IJBB", "IJBC"]
 x_labels = [10 ** -6, 10 ** -5, 10 ** -4, 10 ** -3, 10 ** -2, 10 ** -1]
@@ -46,7 +47,7 @@ for f in folder:
 
     for epoch in range(6, ep+1):   
         try:     
-            fn = f"./work_dirs/WebFace42M_resnet_269_2022_8_23/epoch_{epoch}/{f}/result.txt"
+            fn = f"./work_dirs/{dir}/epoch_{epoch}/{f}/result.txt"
             file = open(fn, "r")
             line = file.readlines()[3].strip().split("|")[2:-1]
             line = [float(f.replace(" ", "")) for f in line ]
@@ -69,5 +70,5 @@ for f in folder:
     plt.ylabel("Recall(%)")
     plt.xlabel("Epoch")
 
-    plt.savefig(f'{f}.png', dpi=130)
+    plt.savefig(f'./work_dirs/{dir}/{f}.png', dpi=130)
     plt.show()

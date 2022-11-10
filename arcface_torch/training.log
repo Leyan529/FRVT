@@ -1,0 +1,132 @@
+Training: 2022-11-08 02:41:56,073-rank_id: 0
+Training: 2022-11-08 02:48:04,038-: margin_list              [1.0, 0.5, 0.0]
+Training: 2022-11-08 02:48:04,038-: network                  resnet_269
+Training: 2022-11-08 02:48:04,039-: resume                   False
+Training: 2022-11-08 02:48:04,039-: save_all_states          True
+Training: 2022-11-08 02:48:04,039-: restore_epoch            0
+Training: 2022-11-08 02:48:04,039-: output                   work_dirs/WebFace42M_resnet_269
+Training: 2022-11-08 02:48:04,039-: embedding_size           512
+Training: 2022-11-08 02:48:04,039-: sample_rate              0.1
+Training: 2022-11-08 02:48:04,039-: interclass_filtering_threshold0
+Training: 2022-11-08 02:48:04,039-: fp16                     True
+Training: 2022-11-08 02:48:04,039-: batch_size               32
+Training: 2022-11-08 02:48:04,039-: optimizer                sgd
+Training: 2022-11-08 02:48:04,039-: lr                       0.1
+Training: 2022-11-08 02:48:04,039-: momentum                 0.9
+Training: 2022-11-08 02:48:04,039-: weight_decay             0.0005
+Training: 2022-11-08 02:48:04,039-: verbose                  40000
+Training: 2022-11-08 02:48:04,039-: frequent                 500
+Training: 2022-11-08 02:48:04,039-: dali                     False
+Training: 2022-11-08 02:48:04,039-: gradient_acc             4
+Training: 2022-11-08 02:48:04,039-: seed                     2048
+Training: 2022-11-08 02:48:04,039-: num_workers              2
+Training: 2022-11-08 02:48:04,039-: valrec                   /home/zimdytsai/leyan/DataSet/FR-val
+Training: 2022-11-08 02:48:04,039-: pretrain                 False
+Training: 2022-11-08 02:48:04,039-: ada                      False
+Training: 2022-11-08 02:48:04,039-: dropout_ratio            0.4
+Training: 2022-11-08 02:48:04,039-: IM_SHAPE                 [112, 112, 3]
+Training: 2022-11-08 02:48:04,039-: rec                      WebFace42M
+Training: 2022-11-08 02:48:04,039-: num_classes              2059906
+Training: 2022-11-08 02:48:04,039-: num_image                42474557
+Training: 2022-11-08 02:48:04,039-: DATASET                  /home/zimdytsai/leyan/DataSet/WebFace42M/WebFace260M
+Training: 2022-11-08 02:48:04,040-: LABEL_PATH               /home/zimdytsai/leyan/DataSet/WebFace42M/WebFace260M_dataset_full.csv
+Training: 2022-11-08 02:48:04,040-: num_epoch                20
+Training: 2022-11-08 02:48:04,040-: warmup_epoch             0
+Training: 2022-11-08 02:48:04,040-: val_targets              ['lfw', 'cplfw', 'cfp_fp']
+Training: 2022-11-08 02:48:04,040-: total_batch_size         256
+Training: 2022-11-08 02:48:04,040-: warmup_step              0
+Training: 2022-11-08 02:48:04,040-: total_step               3318320
+Training: 2022-11-08 02:48:04,042-: model params             115015616
+Training: 2022-11-08 02:48:04,043-: trained params           115015616
+Training: 2022-11-08 02:48:04,044-: used cuda Memory         3202088960 / 11554717696
+Training: 2022-11-08 02:50:20,921-Reducer buckets have been rebuilt in this iteration.
+Training: 2022-11-08 02:59:12,759-Speed 488.00 samples/sec   Loss 62.9359   LearningRate 0.099940   Epoch: 0   Global Step: 1000   Fp16 Grad Scale: 4096   Required: 498 hours
+Training: 2022-11-08 03:03:32,443-Speed 492.91 samples/sec   Loss 67.2942   LearningRate 0.099910   Epoch: 0   Global Step: 1500   Fp16 Grad Scale: 2048   Required: 491 hours
+Training: 2022-11-08 03:07:54,276-Speed 488.86 samples/sec   Loss 66.0461   LearningRate 0.099880   Epoch: 0   Global Step: 2000   Fp16 Grad Scale: 8192   Required: 489 hours
+Training: 2022-11-08 03:07:54,277-save checkpoint step 2000 with all states
+Training: 2022-11-08 03:07:57,858-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 03:12:23,375-Speed 475.66 samples/sec   Loss 66.4903   LearningRate 0.099849   Epoch: 0   Global Step: 2500   Fp16 Grad Scale: 4096   Required: 490 hours
+Training: 2022-11-08 03:16:45,393-Speed 488.52 samples/sec   Loss 66.8780   LearningRate 0.099819   Epoch: 0   Global Step: 3000   Fp16 Grad Scale: 1024   Required: 489 hours
+Training: 2022-11-08 03:21:04,878-Speed 493.29 samples/sec   Loss 66.4070   LearningRate 0.099789   Epoch: 0   Global Step: 3500   Fp16 Grad Scale: 1024   Required: 487 hours
+Training: 2022-11-08 03:25:24,518-Speed 492.99 samples/sec   Loss nan   LearningRate 0.099759   Epoch: 0   Global Step: 4000   Fp16 Grad Scale:  0   Required: 486 hours
+Training: 2022-11-08 03:25:24,518-save checkpoint step 4000 with all states
+Training: 2022-11-08 03:25:59,902-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 03:30:14,199-Speed 441.87 samples/sec   Loss nan   LearningRate 0.099729   Epoch: 0   Global Step: 4500   Fp16 Grad Scale:  0   Required: 491 hours
+Training: 2022-11-08 03:34:25,538-Speed 509.27 samples/sec   Loss nan   LearningRate 0.099699   Epoch: 0   Global Step: 5000   Fp16 Grad Scale:  0   Required: 488 hours
+Training: 2022-11-08 03:38:37,614-Speed 507.79 samples/sec   Loss nan   LearningRate 0.099669   Epoch: 0   Global Step: 5500   Fp16 Grad Scale:  0   Required: 486 hours
+Training: 2022-11-08 03:42:49,613-Speed 507.94 samples/sec   Loss nan   LearningRate 0.099639   Epoch: 0   Global Step: 6000   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 03:42:49,613-save checkpoint step 6000 with all states
+Training: 2022-11-08 03:43:23,687-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 03:47:40,755-Speed 439.65 samples/sec   Loss nan   LearningRate 0.099609   Epoch: 0   Global Step: 6500   Fp16 Grad Scale:  0   Required: 488 hours
+Training: 2022-11-08 03:51:55,290-Speed 502.88 samples/sec   Loss nan   LearningRate 0.099579   Epoch: 0   Global Step: 7000   Fp16 Grad Scale:  0   Required: 487 hours
+Training: 2022-11-08 03:56:07,644-Speed 507.22 samples/sec   Loss nan   LearningRate 0.099549   Epoch: 0   Global Step: 7500   Fp16 Grad Scale:  0   Required: 485 hours
+Training: 2022-11-08 04:00:20,969-Speed 505.28 samples/sec   Loss nan   LearningRate 0.099518   Epoch: 0   Global Step: 8000   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 04:00:20,969-save checkpoint step 8000 with all states
+Training: 2022-11-08 04:00:55,226-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 04:05:10,684-Speed 441.81 samples/sec   Loss nan   LearningRate 0.099488   Epoch: 0   Global Step: 8500   Fp16 Grad Scale:  0   Required: 486 hours
+Training: 2022-11-08 04:09:22,993-Speed 507.32 samples/sec   Loss nan   LearningRate 0.099458   Epoch: 0   Global Step: 9000   Fp16 Grad Scale:  0   Required: 485 hours
+Training: 2022-11-08 04:13:37,685-Speed 502.57 samples/sec   Loss nan   LearningRate 0.099428   Epoch: 0   Global Step: 9500   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 04:17:53,305-Speed 500.75 samples/sec   Loss nan   LearningRate 0.099398   Epoch: 0   Global Step: 10000   Fp16 Grad Scale:  0   Required: 483 hours
+Training: 2022-11-08 04:17:53,305-save checkpoint step 10000 with all states
+Training: 2022-11-08 04:18:19,788-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 04:22:44,260-Speed 439.93 samples/sec   Loss nan   LearningRate 0.099368   Epoch: 0   Global Step: 10500   Fp16 Grad Scale:  0   Required: 486 hours
+Training: 2022-11-08 04:26:57,919-Speed 504.62 samples/sec   Loss nan   LearningRate 0.099338   Epoch: 0   Global Step: 11000   Fp16 Grad Scale:  0   Required: 485 hours
+Training: 2022-11-08 04:31:11,936-Speed 503.91 samples/sec   Loss nan   LearningRate 0.099308   Epoch: 0   Global Step: 11500   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 04:35:26,943-Speed 501.95 samples/sec   Loss nan   LearningRate 0.099278   Epoch: 0   Global Step: 12000   Fp16 Grad Scale:  0   Required: 483 hours
+Training: 2022-11-08 04:35:26,944-save checkpoint step 12000 with all states
+Training: 2022-11-08 04:36:01,462-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 04:40:15,914-Speed 442.95 samples/sec   Loss nan   LearningRate 0.099248   Epoch: 0   Global Step: 12500   Fp16 Grad Scale:  0   Required: 485 hours
+Training: 2022-11-08 04:44:30,628-Speed 502.53 samples/sec   Loss nan   LearningRate 0.099218   Epoch: 0   Global Step: 13000   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 04:48:43,343-Speed 506.50 samples/sec   Loss nan   LearningRate 0.099188   Epoch: 0   Global Step: 13500   Fp16 Grad Scale:  0   Required: 484 hours
+Training: 2022-11-08 04:52:56,350-Speed 505.92 samples/sec   Loss nan   LearningRate 0.099158   Epoch: 0   Global Step: 14000   Fp16 Grad Scale:  0   Required: 483 hours
+Training: 2022-11-08 04:52:56,351-save checkpoint step 14000 with all states
+Training: 2022-11-08 04:53:31,815-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 04:57:48,364-Speed 438.34 samples/sec   Loss nan   LearningRate 0.099128   Epoch: 0   Global Step: 14500   Fp16 Grad Scale:  0   Required: 485 hours
+Training: 2022-11-08 05:03:45,734-rank_id: 0
+Training: 2022-11-08 05:09:46,879-: margin_list              [1.0, 0.5, 0.0]
+Training: 2022-11-08 05:09:46,879-: network                  resnet_269
+Training: 2022-11-08 05:09:46,879-: resume                   False
+Training: 2022-11-08 05:09:46,879-: save_all_states          True
+Training: 2022-11-08 05:09:46,879-: restore_epoch            0
+Training: 2022-11-08 05:09:46,879-: output                   work_dirs/WebFace42M_resnet_269
+Training: 2022-11-08 05:09:46,879-: embedding_size           512
+Training: 2022-11-08 05:09:46,879-: sample_rate              0.1
+Training: 2022-11-08 05:09:46,879-: interclass_filtering_threshold0
+Training: 2022-11-08 05:09:46,879-: fp16                     True
+Training: 2022-11-08 05:09:46,879-: batch_size               32
+Training: 2022-11-08 05:09:46,879-: optimizer                sgd
+Training: 2022-11-08 05:09:46,879-: lr                       0.1
+Training: 2022-11-08 05:09:46,879-: momentum                 0.9
+Training: 2022-11-08 05:09:46,879-: weight_decay             0.0005
+Training: 2022-11-08 05:09:46,879-: verbose                  40000
+Training: 2022-11-08 05:09:46,879-: frequent                 500
+Training: 2022-11-08 05:09:46,880-: dali                     False
+Training: 2022-11-08 05:09:46,880-: gradient_acc             4
+Training: 2022-11-08 05:09:46,880-: seed                     2048
+Training: 2022-11-08 05:09:46,880-: num_workers              2
+Training: 2022-11-08 05:09:46,880-: valrec                   /home/zimdytsai/leyan/DataSet/FR-val
+Training: 2022-11-08 05:09:46,880-: pretrain                 False
+Training: 2022-11-08 05:09:46,880-: ada                      False
+Training: 2022-11-08 05:09:46,880-: dropout_ratio            0.4
+Training: 2022-11-08 05:09:46,880-: IM_SHAPE                 [112, 112, 3]
+Training: 2022-11-08 05:09:46,880-: rec                      WebFace42M
+Training: 2022-11-08 05:09:46,880-: num_classes              2059906
+Training: 2022-11-08 05:09:46,880-: num_image                42474557
+Training: 2022-11-08 05:09:46,880-: DATASET                  /home/zimdytsai/leyan/DataSet/WebFace42M/WebFace260M
+Training: 2022-11-08 05:09:46,880-: LABEL_PATH               /home/zimdytsai/leyan/DataSet/WebFace42M/WebFace260M_dataset_full.csv
+Training: 2022-11-08 05:09:46,880-: num_epoch                20
+Training: 2022-11-08 05:09:46,880-: warmup_epoch             0
+Training: 2022-11-08 05:09:46,880-: val_targets              ['lfw', 'cplfw', 'cfp_fp']
+Training: 2022-11-08 05:09:46,880-: total_batch_size         256
+Training: 2022-11-08 05:09:46,880-: warmup_step              0
+Training: 2022-11-08 05:09:46,880-: total_step               3318320
+Training: 2022-11-08 05:09:46,882-: model params             115015616
+Training: 2022-11-08 05:09:46,884-: trained params           115015616
+Training: 2022-11-08 05:09:46,884-: used cuda Memory         3202088960 / 11554717696
+Training: 2022-11-08 05:12:06,218-Reducer buckets have been rebuilt in this iteration.
+Training: 2022-11-08 05:20:58,746-Speed 484.76 samples/sec   Loss 63.4547   LearningRate 0.100000   Epoch: 0   Global Step: 1000   Fp16 Grad Scale: 4096   Required: 498 hours
+Training: 2022-11-08 05:25:21,259-Speed 487.60 samples/sec   Loss 65.0590   LearningRate 0.100000   Epoch: 0   Global Step: 1500   Fp16 Grad Scale: 8192   Required: 494 hours
+Training: 2022-11-08 05:29:45,770-Speed 483.91 samples/sec   Loss 66.1006   LearningRate 0.100000   Epoch: 0   Global Step: 2000   Fp16 Grad Scale: 8192   Required: 492 hours
+Training: 2022-11-08 05:29:45,770-save checkpoint step 2000 with all states
+Training: 2022-11-08 05:30:20,701-Wrote checkpoint to: work_dirs/WebFace42M_resnet_269/checkpoint_epoch_0_gpu_0.pt all states
+Training: 2022-11-08 05:34:43,538-Speed 429.87 samples/sec   Loss 66.5649   LearningRate 0.100000   Epoch: 0   Global Step: 2500   Fp16 Grad Scale: 8192   Required: 503 hours
