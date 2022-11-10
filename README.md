@@ -3,7 +3,7 @@
 ## Arcface_torch:
   * Insightface Face Distributed Arcface Training in Pytorch 
   
-## Arcface_ada:
+## Adaface:
   * Insightface Face Distributed Arcface Training in Pytorch + AdaFace (With AdaFace margin version)
   * Reference: [AdaFace: Quality Adaptive Margin for Face Recognition](https://github.com/mk-minchul/AdaFace)
 
