@@ -35,10 +35,11 @@ parser.add_argument('--model-prefix',
     # default='work_dirs/WebFace42M_resnext152_8x14d_2022_7_20/model_epoch_0000_step_100000.pt', 
     # default='work_dirs/WebFace42M_arcface_r200_2022_7_19/model_epoch_0000_step_090000.pt', 
     # default="work_dirs/WebFace42M_resnest152_8x14d_2022_7_27/model_epoch_0000_step_118000.pt",
-    default="work_dirs/WebFace42M_resnet_269_2022_7_29/epoch3.pt",
+    # default="work_dirs/WebFace42M_resnet_269_2022_8_10/model_epoch_0008_step_1360000.pt",
+    default="work_dirs/r50/checkpoint_gpu_0_19_2220000.pt",
     help='path to load model.')
 parser.add_argument('--network', 
-    default='resnet_269', 
+    default='r50', 
     type=str, help='')
 
 parser.add_argument('--image-path', default='/home/leyan/DataSet/FR-val/IJBB', type=str, help='')

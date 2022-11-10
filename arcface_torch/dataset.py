@@ -14,10 +14,163 @@ from torchvision import transforms
 from torchvision.datasets import ImageFolder
 from utils.utils_distributed_sampler import DistributedSampler
 from utils.utils_distributed_sampler import get_dist_info, worker_init_fn
+from utils.augmenter import Augmenter
+from PIL import Image
+import torchvision.datasets as datasets
+import cv2
+from imgaug import augmenters as iaa
 
+IMG_NORM_MEAN = [123.675, 116.28, 103.53]
+IMG_NORM_STD = [58.395, 57.12, 57.375]
 
+def readDatasetLabel(rootdir, labelfile):
+    image_list = []
+    label_list = []
+    with open(labelfile, "r") as f:
+        for line in f.readlines():
+            line = line.strip()
+            infor = line.split(",")
+            image_list.append(os.path.join(rootdir, infor[0]))
+            label_list.append(int(infor[1]))
+    return image_list, label_list
+
+class CustomImageFolderDataset(ImageFolder):
+
+    def __init__(self,
+                 root,
+                #  labelfile,
+                 transform=None,
+                 target_transform=None,
+                 loader=datasets.folder.default_loader,
+                 is_valid_file=None,
+                 low_res_augmentation_prob=0.0,
+                 crop_augmentation_prob=0.0,
+                 photometric_augmentation_prob=0.0,
+                 swap_color_channel=False,
+                #  output_dir='./',
+                 ):
+
+        super(CustomImageFolderDataset, self).__init__(root,
+                                                       transform=transform,
+                                                       target_transform=target_transform,
+                                                       loader=loader,
+                                                       is_valid_file=is_valid_file)
+        self.root = root
+        # self.labelfile = labelfile
+        # self.image_list, self.label_list = readDatasetLabel(self.root, labelfile)
+        self.augmenter = Augmenter(crop_augmentation_prob, photometric_augmentation_prob, low_res_augmentation_prob)
+        self.swap_color_channel = swap_color_channel
+        # self.output_dir = output_dir  # for checking the sanity of input images
+
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (sample, target) where target is class_index of the target class.
+        """
+        path, target = self.samples[index]
+        sample = self.loader(path)
+        sample = Image.fromarray(np.asarray(sample)[:,:,::-1])
+
+        if self.swap_color_channel:
+            # swap RGB to BGR if sample is in RGB
+            # we need sample in BGR
+            sample = Image.fromarray(np.asarray(sample)[:,:,::-1])
+
+        sample = self.augmenter.augment(sample)
+
+        # sample_save_path = os.path.join(self.output_dir, 'training_samples', 'sample.jpg')
+        # if not os.path.isfile(sample_save_path):
+        #     os.makedirs(os.path.dirname(sample_save_path), exist_ok=True)
+        #     cv2.imwrite(sample_save_path, np.array(sample))  # the result has to look okay (Not color swapped)
+
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return sample, target # 86235
+
+class FrDataset(Dataset):
+    def __init__(self, data_folder, labelfile, image_size=(112, 112), open_aug=False, 
+                 transform=None,
+                 target_transform=None,
+                 low_res_augmentation_prob=0.0,
+                 crop_augmentation_prob=0.0,
+                 photometric_augmentation_prob=0.0,
+                 swap_color_channel=False,):
+        self.data_folder = data_folder
+        if not os.path.exists(self.data_folder):
+            raise Exception("%s  not exists." % self.data_folder)
+
+        self.image_size = image_size
+        self.image_list, self.label_list = readDatasetLabel(data_folder, labelfile)
+        self.num_classes = len(set(self.label_list))
+        self.open_aug = open_aug
+
+        self.augmenter = Augmenter(crop_augmentation_prob, photometric_augmentation_prob, low_res_augmentation_prob)
+        self.swap_color_channel = swap_color_channel
+
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def _image_preprocess(self, image, image_size):
+        processedimage = cv2.resize(image, image_size)
+        processedimage = image_preprocess_fromarray(processedimage)
+        processedimage = torch.FloatTensor(processedimage.transpose((2, 0, 1)).astype(float))
+        return processedimage
+
+    def __getitem__(self, index):
+        f = self.image_list[index]
+        sample = Image.open(f).convert('RGB')   
+        # target = torch.tensor(self.label_list[index])
+        target = self.label_list[index]
+
+        sample = Image.fromarray(np.asarray(sample)[:,:,::-1])
+
+        if self.swap_color_channel:
+            # swap RGB to BGR if sample is in RGB
+            # we need sample in BGR
+            sample = Image.fromarray(np.asarray(sample)[:,:,::-1])
+
+        sample = self.augmenter.augment(sample)
+
+        # sample_save_path = os.path.join(self.output_dir, 'training_samples', 'sample.jpg')
+        # if not os.path.isfile(sample_save_path):
+        #     os.makedirs(os.path.dirname(sample_save_path), exist_ok=True)
+        #     cv2.imwrite(sample_save_path, np.array(sample))  # the result has to look okay (Not color swapped)
+
+        if self.transform is not None:
+            sample = self.transform(sample)
+        if self.target_transform is not None:
+            target = self.target_transform(target)     
+
+        return sample, target
+
+        # if self.open_aug:
+        #     bgr_image = image_aug(bgr_image)
+
+        # processed_image = self._image_preprocess(bgr_image, self.image_size)
+        # label = torch.tensor(self.label_list[index])
+        # return processed_image, label        
+
+    def __getitem_o__(self, index):
+        bgr_image = cv2.imread(self.image_list[index]) # (112, 112, 3)
+
+        if self.open_aug:
+            bgr_image = image_aug(bgr_image)
+
+        processed_image = self._image_preprocess(bgr_image, self.image_size)
+        label = torch.tensor(self.label_list[index])
+        return processed_image, label
+
+    def __len__(self):
+        return len(self.image_list)
+        
 def get_dataloader(
     root_dir,
+    labelfile,
     local_rank,
     batch_size,
     dali = False,
@@ -45,7 +198,18 @@ def get_dataloader(
              transforms.ToTensor(),
              transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
              ])
-        train_set = ImageFolder(root_dir, transform)
+        # train_set = ImageFolder(root_dir, transform)
+
+        train_set = FrDataset(root_dir,
+                            labelfile,
+                            image_size=(112, 112),
+                            open_aug=True,
+                            transform=transform,
+                            low_res_augmentation_prob=0.2,
+                            crop_augmentation_prob=0.2,
+                            photometric_augmentation_prob=0.2,
+                            swap_color_channel=False
+                            )
 
     # DALI
     if dali:
@@ -76,7 +240,6 @@ def get_dataloader(
     )
 
     return train_loader
-
 class BackgroundGenerator(threading.Thread):
     def __init__(self, generator, local_rank, max_prefetch=6):
         super(BackgroundGenerator, self).__init__()
@@ -245,3 +408,34 @@ class DALIWarper(object):
 
     def reset(self):
         self.iter.reset()
+
+def image_preprocess_fromarray(image):
+    bgr_image = image
+    # if cfg.IMG_NORM.TO_RGB:
+    tobeprocessimg = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+    # else:
+    #     tobeprocessimg = bgr_image
+    tobeprocessimg = tobeprocessimg.astype(np.float32)
+    tobeprocessimg[:, :, 0] = (tobeprocessimg[:, :, 0] - IMG_NORM_MEAN[0]) / IMG_NORM_STD[0]
+    tobeprocessimg[:, :, 1] = (tobeprocessimg[:, :, 1] - IMG_NORM_MEAN[1]) / IMG_NORM_STD[1]
+    tobeprocessimg[:, :, 2] = (tobeprocessimg[:, :, 2] - IMG_NORM_MEAN[2]) / IMG_NORM_STD[2]
+    return tobeprocessimg
+
+def image_aug(image):
+    #seq = iaa.SomeOf((1, 5),
+    #                 [
+    #                     iaa.Multiply((0.4, 1.5), name="Multiply"),
+    #                     iaa.Fliplr(0.5, name="Flip"),
+    #                     #iaa.CoarseDropout((0.03, 0.1), size_percent=(0.01, 0.03), name="RandomDropout"),
+    #                     iaa.AdditiveGaussianNoise(scale=0.05 * 224),
+    #                     iaa.OneOf([iaa.GaussianBlur((0, 3.0), name="GaussianBlur"),
+    #                                iaa.AverageBlur(k=(0, 3), name="AverageBlur"),
+    #                                iaa.MotionBlur(k=6, name="MotionBlur")
+    #                                ]),
+    #                     iaa.Rotate((-10, 10))
+    #                 ])
+    seq = iaa.Sequential([
+        iaa.Fliplr(0.5, name="Flip")
+    ])
+    processed_image = np.squeeze(seq(images=np.expand_dims(image, axis=0)), axis=0)
+    return processed_image    

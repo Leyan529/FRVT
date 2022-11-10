@@ -1,4 +1,4 @@
-from .iresnet import iresnet18, iresnet34, iresnet50, iresnet101, iresnet100, iresnet200
+from .iresnet import iresnet18, iresnet34, iresnet50, iresnet100, iresnet200, iresnet400
 from .mobilefacenet import get_mbf
 from .resnet import resnet_18, resnet_50, \
                               resnet_101, resnet_152, \
@@ -12,18 +12,19 @@ from .resnext import resnext200_32x4d, resnext200_1x64d, resnext200_8x14d, \
 from .resnest import resnest152_8x14d, resnest101_8x14d, \
     resnest200_8x14d, resnest200_2x40d, resnest200_4x24d, resnest200_1x64d, \
     resnest152_1x64d_r4, resnest200_1x64d_r4
-
-# from .resnest import resnest152_8x14d   
+ 
+from .repvggnet import RepVGG_A0, RepVGG_B3, RepVGG_B2g4, RepVGG_B3g4
+from .elanet import build_elannet
 
 def get_model(name, **kwargs):
-    # resnet
+    # LResNetE-IR
     if name == "resnet_269":
         return resnet_269(mode='ir', **kwargs)
     elif name == "resnet_200":
         return resnet_200(mode='ir', **kwargs)
     
     
-    # resnext
+    # resnext (focus 8x14d)
     elif name == "resnext200_1x64d":
         return resnext200_1x64d(**kwargs)
     elif name == "resnext200_2x40d":
@@ -40,25 +41,25 @@ def get_model(name, **kwargs):
         return resnext101_8x14d(**kwargs)
 
 
-    # resnest (radix=2)
+    # resnest (focus 8x14d) (radix=2)
     elif name == "resnest101_8x14d":
         return resnest101_8x14d(**kwargs)
-    # elif name == "resnest152_2x40d":
-    #     return resnest152_2x40d(**kwargs)
-    # elif name == "resnest152_4x24d":
-    #     return resnest152_4x24d(**kwargs)
     elif name == "resnest152_8x14d":
         return resnest152_8x14d(**kwargs)
-    # elif name == "resnest152_32x4d":
-    #     return resnest152_32x4d(**kwargs)
 
-    # elif name == "resnest152_1x64d_r4":
-    #     return resnest152_1x64d_r4(**kwargs)
-    # elif name == "resnest200_1x64d_r4":
-    #     return resnest200_1x64d_r4(**kwargs)
-    # elif name == "resnest200_1x64d":
-    #     return resnest200_1x64d(**kwargs)
+    # RepVgg
+    elif name == "RepVGG_A0":
+        return RepVGG_A0(**kwargs)
+    elif name == "RepVGG_B3g4":
+        return RepVGG_B3g4(**kwargs)
+    elif name == "RepVGG_B3":
+        return RepVGG_B3(**kwargs)
 
+
+    elif name == "elannet_tiny":
+        return build_elannet(model_size = "tiny", **kwargs)
+    elif name == "elannet":
+        return build_elannet(**kwargs)
         
 
     # resnet
@@ -70,12 +71,9 @@ def get_model(name, **kwargs):
         return iresnet50(False, **kwargs)
     elif name == "r100":
         return iresnet100(False, **kwargs)
-    elif name == "r101":
-        return iresnet101(False, **kwargs)
     elif name == "r200":
         return iresnet200(False, **kwargs)
-    elif name == "r400":
-        return iresnet400(False, **kwargs)
+    
     elif name == "r2060":
         from .iresnet2060 import iresnet2060
         return iresnet2060(False, **kwargs)
