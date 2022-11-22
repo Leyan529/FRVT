@@ -47,5 +47,6 @@ config.gradient_acc = 1
 config.seed = 2048
 
 # dataload numworkers
-config.num_workers = 2
+config.num_workers = 8
 config.valrec =""
+config.pretrain = False
